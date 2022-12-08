@@ -1,8 +1,9 @@
-from NginxAPI import NginxAPI
+from nginxAPI import NginxAPI
 from typing import Optional
 from copy import deepcopy
 from sys import argv, exit
 from base64 import b64encode, b64decode
+from requests import Response
 
 def main():
     nginx = NginxAPI()
@@ -74,21 +75,22 @@ def get_template(nginx: NginxAPI, template_domain: str) -> Optional[dict]:
             if template_domain in proxy_host['domain_names']:
                 template = {}
                 wanted_keys = ['domain_names', 'forward_scheme', 'forward_host', 'forward_port', 'certificate_id', 'ssl_forced', 'hsts_enabled', 'hsts_subdomains', 'http2_support',
-                                'block_exploits', 'caching_enabled', 'allow_websocket_upgrade', 'access_list_id', 'advanced_config', 'enabled', 'meta', 'locations']
+                                'block_exploits', 'caching_enabled', 'allow_websocket_upgrade', 'access_list_id', 'advanced_config', 'meta', 'locations']
 
+                template['enabled'] = 1
                 for key, value in proxy_host.items():
                     if key in wanted_keys:
                         template[key] = value
                 return template
     return template
 
-def create_host(nginx: NginxAPI, template: dict, domain_names: list, forward_host: str, forward_port: int) -> int:
+def create_host(nginx: NginxAPI, template: dict, domain_names: list, forward_host: str, forward_port: int) -> Response:
     copy_template = deepcopy(template)
     copy_template['domain_names'] = domain_names
     copy_template['forward_host'] = forward_host
     copy_template['forward_port'] = forward_port
     response = nginx.create_host(copy_template)
-    return response.status_code
+    return response
 
 
 
