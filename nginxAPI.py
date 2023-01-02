@@ -1,4 +1,5 @@
-from requests import Session
+from typing import Optional
+from requests import Session, Response
 
 class NginxAPI:
     def __init__(self, host: str=None, username: str=None, password: str=None):
@@ -32,12 +33,23 @@ class NginxAPI:
         
         raise AuthException(response.text)
 
-    def get_hosts(self):
+    def get_hosts(self) -> Optional[list[dict]]:
         response = self._session.get(f'{self._host}/api/nginx/proxy-hosts', headers = self.__get_auth_header())
-        return response
+        if response.status_code != 200:
+            return None
+        
+        return response.json()
     
-    def create_host(self, proxy_properties: dict):
+    def create_host(self, proxy_properties: dict) -> Response:
         response = self._session.post(f'{self._host}/api/nginx/proxy-hosts', headers=self.__get_auth_header(), json=proxy_properties)
+        return response
+
+    def delete_host(self, id: str):
+        response = self._session.delete(f'{self._host}/api/nginx/proxy-hosts/{id}', headers=self.__get_auth_header())
+        return response
+
+    def update_host(self, id: str, proxy_properties: dict):
+        response = self._session.put(f'{self._host}/api/nginx/proxy-hosts/{id}', headers=self.__get_auth_header(), json=proxy_properties)
         return response
 
     def __get_auth_header(self) -> dict:
