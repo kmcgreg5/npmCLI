@@ -100,7 +100,7 @@ def create_host(nginx: NginxAPI, template: dict, domain_names: list, forward_hos
 
 def delete_host(nginx: NginxAPI, domain: str) -> Response:
     proxy_hosts = nginx.get_hosts()
-    if response is None:
+    if proxy_hosts is None:
         sys.exit(f'Failed to fetch hosts.')
     
     for proxy_host in proxy_hosts:
