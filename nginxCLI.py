@@ -1,28 +1,42 @@
 from nginxAPI import NginxAPI
 from typing import Optional
 from copy import deepcopy
-from sys import argv, exit
 from base64 import b64encode, b64decode
 from requests import Response
+from argparse import ArgumentParser
 
 def main():
     nginx = NginxAPI()
-    command_list = ["create-info-file", "create-host"]
-    check_help(command_list)
+    
+    parser = ArgumentParser(prog="Nginx Proxy Manager CLI")
+    subparsers = parser.add_subparsers(help="The supported commands.", dest="command")
 
-    command = argv[1]
-    if command == "create-info-file": #create-info-file info-file-path host username password
-        create_info_file(argv[2], argv[3], argv[4], argv[5])
-    elif command == 'create-host': #create-host info-file-path "domain1, ..." forward-host forward-port
-        info_file_path = argv[2]
-        domain_names = [domain.strip() for domain in argv[3].split(",")]
-        forward_host = argv[4]
-        forward_port = int(argv[5])
-        nginx.set_target_info(*read_info_file(info_file_path))
+    # Create info file parser
+    create_info_file_parser = subparsers.add_parser("create-info-file", help="Create an info file for subsequent usage.")
+    create_info_file_parser.add_argument("filepath", help="The info file path to create.")
+    create_info_file_parser.add_argument("host", help="The NginxProxyManager instance url.")
+    create_info_file_parser.add_argument("username", help="The username for the NginxProxyManager instance.")
+    create_info_file_parser.add_argument("password", help="The password for the NginxProxyManager instance.")
+
+    # Create host parser
+    create_host_parser = subparsers.add_parser("create-host", help="Creates a host from a template.")
+    create_host_parser.add_argument("filepath", help="The path to an info file.")
+    create_host_parser.add_argument("domains", help="A single domain or comma seperated list of domains to forward.")
+    create_host_parser.add_argument("host", help="The host to forward to.")
+    create_host_parser.add_argument("port", help="The port to forward to.")
+
+    args = parser.parse_args()
+
+    if args.command == "create-info-file": #create-info-file info-file-path host username password
+        create_info_file(args.filepath, args.host, args.username, args.password)
+        print("Success")
+    elif args.command == 'create-host': #create-host info-file-path "domain1, ..." forward-host forward-port
+        domain_names = [domain.strip() for domain in args.domains.split(",")]
+        nginx.set_target_info(*read_info_file(args.filepath))
         
         with nginx:
             template = get_template(nginx, "template")
-            response = create_host(nginx, template, domain_names, forward_host, forward_port)
+            response = create_host(nginx, template, domain_names, args.host, int(args.port))
             if response.ok:
                 print("Success")
             else:
@@ -43,27 +57,6 @@ def read_info_file(file_path: str) -> tuple[str]:
         password = b64decode(file.readline()).decode("utf-8")
     
     return host, username, password
-
-def check_help(command_list: list[str]):
-    help_message = f'Usage: python {argv[0]} {"|".join(command_list)} --help'
-    if len(argv) == 1:
-        print(help_message)
-        exit(1)
-
-    command = argv[1]
-    if command not in command_list:
-        print(help_message)
-        exit(1)
-    elif command == "create-host" and ("--help" in argv or len(argv) != 6):
-        create_host_help_message = f'Usage: python {argv[0]} create-host info-file-path \"domain1, ...\" forward-host forward-port'
-        print(create_host_help_message)
-        exit(1)
-    elif command == "create-info-file" and ("--help" in argv or len(argv) != 6):
-        print(len(argv))
-        print(argv)
-        create_password_file_help_message = f'Usage python {argv[0]} create-info-file info-file-path host username password'
-        print(create_password_file_help_message)
-        exit(1)
 
 
 def get_template(nginx: NginxAPI, template_domain: str) -> Optional[dict]:
