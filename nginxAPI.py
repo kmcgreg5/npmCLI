@@ -44,7 +44,7 @@ class NginxAPI:
         response = self._session.post(f'{self._host}/api/nginx/proxy-hosts', headers=self.__get_auth_header(), json=proxy_properties)
         return response
 
-    def delete_host(self, id: str):
+    def remove_host(self, id: str):
         response = self._session.delete(f'{self._host}/api/nginx/proxy-hosts/{id}', headers=self.__get_auth_header())
         return response
 

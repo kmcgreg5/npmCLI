@@ -25,9 +25,9 @@ def main():
     create_host_parser.add_argument("port", help="The port to forward to.")
 
     # Delete host parser
-    delete_host_parser = subparsers.add_parser("delete-host", help="Removes a host.")
-    delete_host_parser.add_argument("filepath", help="The path to an info file.")
-    delete_host_parser.add_argument("domain", help="The domain to remove.")
+    remove_host_parser = subparsers.add_parser("remove-host", help="Removes a host.")
+    remove_host_parser.add_argument("filepath", help="The path to an info file.")
+    remove_host_parser.add_argument("domain", help="The domain to remove.")
 
     args = parser.parse_args()
 
@@ -47,9 +47,9 @@ def main():
             print("Success")
         else:
             sys.exit(f'Failed:\nStatus {response.status_code}\n\n{response.text}\n\n')
-    elif args.command == "delete-host":
+    elif args.command == "remove-host":
         with NginxAPI(*read_info_file(args.filepath)) as nginx:
-            response = delete_host(nginx, args.domain)
+            response = remove_host(nginx, args.domain)
 
         if response.ok:
             print("Success")
@@ -98,7 +98,7 @@ def create_host(nginx: NginxAPI, template: dict, domain_names: list, forward_hos
     copy_template['forward_port'] = forward_port
     return nginx.create_host(copy_template)
 
-def delete_host(nginx: NginxAPI, domain: str) -> Response:
+def remove_host(nginx: NginxAPI, domain: str) -> Response:
     proxy_hosts = nginx.get_hosts()
     if proxy_hosts is None:
         sys.exit(f'Failed to fetch hosts.')
@@ -106,13 +106,12 @@ def delete_host(nginx: NginxAPI, domain: str) -> Response:
     for proxy_host in proxy_hosts:
         if domain in proxy_host['domain_names']:
             if len(proxy_host['domain_names']) == 1:
-                # delete entry
-                return nginx.delete_host(proxy_host['id'])
+                # remove entry
+                return nginx.remove_host(proxy_host['id'])
             else:
                 # update entry
                 proxy_host['domain_names'].remove(domain)
                 return nginx.update_host(proxy_host['id'], {'domain_names':proxy_host['domain_names']})
-                
     
     sys.exit(f'Failed to find domain "{domain}".')
 
