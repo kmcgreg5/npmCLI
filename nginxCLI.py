@@ -110,6 +110,7 @@ def delete_host(nginx: NginxAPI, domain: str) -> Response:
                 return nginx.delete_host(proxy_host['id'])
             else:
                 # update entry
+                proxy_host['domain_names'].remove(domain)
                 return nginx.update_host(proxy_host['id'], {'domain_names':proxy_host['domain_names']})
                 
     
