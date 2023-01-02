@@ -38,9 +38,11 @@ def main():
         domain_names = [domain.strip() for domain in args.domains.split(",")]
         with NginxAPI(*read_info_file(args.filepath)) as nginx:
             template = get_template(nginx, "template")
+            if template is None:
+                sys.exit(f'Failed to fetch template.')
 
-        if template is None: sys.exit(f'Failed to fetch template.')
-        response = create_host(nginx, template, domain_names, args.host, int(args.port))
+            response = create_host(nginx, template, domain_names, args.host, int(args.port))
+
         if response.ok:
             print("Success")
         else:
