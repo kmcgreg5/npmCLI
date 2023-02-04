@@ -49,7 +49,7 @@ class NginxAPI:
         return response
 
     def update_host(self, id: str, proxy_properties: dict):
-        response = self._session.put(f'{self._host}/api/nginx/proxy-hosts/{id}/', headers=self.__get_auth_header(), json=proxy_properties)
+        response = self._session.put(f'{self._host}/api/nginx/proxy-hosts/{id}', headers=self.__get_auth_header(), json=proxy_properties)
         return response
 
     def __get_auth_header(self) -> dict:
