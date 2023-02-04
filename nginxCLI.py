@@ -81,6 +81,7 @@ def main():
                     response = nginx.update_host(host['id'], update_dict)
                     if not response.ok:
                         sys.exit(f'Failed to update host: {host["domain_names"]}')
+                    print(f'Updated host: {host["domain_names"]}')
     else:
         parser.print_help()
         sys.exit(1)
