@@ -26,30 +26,30 @@ class NginxAPI:
             self._session = None
 
     def __get_token(self) -> str:
-        response = self._session.post(f'{self._host}/api/tokens', json={"identity":self.__username, "secret":self.__password})
+        response = self._session.post(f'{self._host}/api/tokens/', json={"identity":self.__username, "secret":self.__password})
 
         if response.status_code == 200:
             return response.json()['token']
         
-        raise AuthException(response.text)
+        raise Exception(response.text)
 
     def get_hosts(self) -> Optional[list[dict]]:
-        response = self._session.get(f'{self._host}/api/nginx/proxy-hosts', headers = self.__get_auth_header())
+        response = self._session.get(f'{self._host}/api/nginx/proxy-hosts/', headers = self.__get_auth_header())
         if response.status_code != 200:
             return None
         
         return response.json()
     
     def create_host(self, proxy_properties: dict) -> Response:
-        response = self._session.post(f'{self._host}/api/nginx/proxy-hosts', headers=self.__get_auth_header(), json=proxy_properties)
+        response = self._session.post(f'{self._host}/api/nginx/proxy-hosts/', headers=self.__get_auth_header(), json=proxy_properties)
         return response
 
     def remove_host(self, id: str):
-        response = self._session.delete(f'{self._host}/api/nginx/proxy-hosts/{id}', headers=self.__get_auth_header())
+        response = self._session.delete(f'{self._host}/api/nginx/proxy-hosts/{id}/', headers=self.__get_auth_header())
         return response
 
     def update_host(self, id: str, proxy_properties: dict):
-        response = self._session.put(f'{self._host}/api/nginx/proxy-hosts/{id}', headers=self.__get_auth_header(), json=proxy_properties)
+        response = self._session.put(f'{self._host}/api/nginx/proxy-hosts/{id}/', headers=self.__get_auth_header(), json=proxy_properties)
         return response
 
     def __get_auth_header(self) -> dict:

@@ -29,11 +29,18 @@ def main():
     remove_host_parser.add_argument("filepath", help="The path to an info file.")
     remove_host_parser.add_argument("domain", help="The domain to remove.")
 
+    # Update from search
+    update_hosts_parser = subparsers.add_parser("update-hosts", help="Updates a host from a template and search template.")
+    update_hosts_parser.add_argument("filepath", help="The path to an info file.")
+    field_choices = ['domain_names', 'forward_scheme', 'forward_host', 'forward_port', 'certificate_id', 'ssl_forced', 'hsts_enabled', 'hsts_subdomains', 'http2_support',
+                            'block_exploits', 'caching_enabled', 'allow_websocket_upgrade', 'access_list_id', 'advanced_config', 'meta', 'locations', 'enabled']
+    update_hosts_parser.add_argument("field", choices=field_choices[:-1], help="The field to update.")
+    update_hosts_parser.add_argument("--searchfield", default=["advanced_config"], choices=field_choices, nargs='+', help="The field to match.")
+
     args = parser.parse_args()
 
     if args.command == "create-info-file":
         create_info_file(args.filepath, args.host, args.username, args.password)
-        print("Success")
     elif args.command == 'create-host':
         domain_names = [domain.strip() for domain in args.domains.split(",")]
         with NginxAPI(*read_info_file(args.filepath)) as nginx:
@@ -43,18 +50,40 @@ def main():
 
             response = create_host(nginx, template, domain_names, args.host, int(args.port))
 
-        if response.ok:
-            print("Success")
-        else:
+        if not response.ok:
             sys.exit(f'Failed:\nStatus {response.status_code}\n\n{response.text}\n\n')
     elif args.command == "remove-host":
         with NginxAPI(*read_info_file(args.filepath)) as nginx:
             response = remove_host(nginx, args.domain)
 
-        if response.ok:
-            print("Success")
-        else:
+        if not response.ok:
             sys.exit(f'Failed:\nStatus {response.status_code}\n\n{response.text}\n\n')
+    elif args.command == "update-hosts":
+        with NginxAPI(*read_info_file(args.filepath)) as nginx:
+            update_template: Optional[dict] = get_template(nginx, "updatetemplate")
+            if update_template is None:
+                sys.exit("Failed to fetch updatetemplate.")
+            
+            search_template: Optional[dict] = get_template(nginx, "searchtemplate")
+            if search_template is None:
+                sys.exit("Failed to fetch searchtemplate.")
+            
+            hosts = nginx.get_hosts()
+            if hosts is None:
+                sys.exit("Failed to fetch hosts.")
+
+            update_dict: dict={args.field:update_template[args.field]}
+            for host in hosts:
+                print(host)
+                break
+            
+
+
+            
+    else:
+        parser.print_help()
+        sys.exit(1)
+    print("Success")
 
 
 def create_info_file(file_path: str, host: str, username: str, password: str):
