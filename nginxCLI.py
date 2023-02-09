@@ -6,7 +6,7 @@ from requests import Response
 from argparse import ArgumentParser
 import sys
 
-def main(args: list):
+def main(args: list=sys.argv):
     parser = ArgumentParser(prog="Nginx Proxy Manager CLI")
     subparsers = parser.add_subparsers(help="The supported commands.", dest="command")
 
@@ -151,4 +151,4 @@ def remove_host(nginx: NginxAPI, domain: str) -> Response:
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
