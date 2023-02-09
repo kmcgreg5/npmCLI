@@ -11,7 +11,7 @@ version = "1.0"
 dynamic = ["dependencies"]
 
 [tool.setuptools]
-packages = []
+py_modules = ["nginxCLI", "nginxAPI"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["generated-requirements.txt"]}
