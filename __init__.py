@@ -1,2 +1,1 @@
-from nginxCLI import *
-from nginxAPI import *
+from . import nginxAPI, nginxCLI
