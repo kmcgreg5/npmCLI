@@ -10,8 +10,8 @@ requires-python = ">=3.7"
 version = "1.0"
 dynamic = ["dependencies"]
 
-#[tool.setuptools]
-#packages = ["nginxCLI.py", "nginxAPI.py"]
+[tool.setuptools]
+packages = []
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["generated-requirements.txt"]}
