@@ -6,7 +6,7 @@ from requests import Response
 from argparse import ArgumentParser
 import sys
 
-def main():
+def main(args: list):
     parser = ArgumentParser(prog="Nginx Proxy Manager CLI")
     subparsers = parser.add_subparsers(help="The supported commands.", dest="command")
 
@@ -37,7 +37,7 @@ def main():
     update_hosts_parser.add_argument("field", choices=field_choices[:-1], help="The field to update.")
     update_hosts_parser.add_argument("--searchfield", default=["advanced_config"], choices=field_choices, nargs='+', help="The field to match.")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     if args.command == "create-info-file":
         create_info_file(args.filepath, args.host, args.username, args.password)
@@ -151,4 +151,4 @@ def remove_host(nginx: NginxAPI, domain: str) -> Response:
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
