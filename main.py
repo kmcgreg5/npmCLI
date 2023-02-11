@@ -1,4 +1,4 @@
-from .nginxCLI import NginxAPI
+from nginxCLI import NginxAPI
 from typing import Optional
 from copy import deepcopy
 from base64 import b64encode, b64decode
