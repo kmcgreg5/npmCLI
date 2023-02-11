@@ -12,4 +12,3 @@ dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["generated-requirements.txt"]}
-version = {file = ["version.txt"]}
