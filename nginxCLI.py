@@ -1,4 +1,7 @@
-from nginxAPI import NginxAPI
+if __name__ == "__main__":
+    from nginxAPI import NginxAPI
+else:
+    from .nginxAPI import NginxAPI
 from typing import Optional
 from copy import deepcopy
 from base64 import b64encode, b64decode
