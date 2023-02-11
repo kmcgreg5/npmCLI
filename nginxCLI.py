@@ -6,7 +6,7 @@ from requests import Response
 from argparse import ArgumentParser
 import sys
 
-def main(args: list=sys.argv):
+def main(args: list=sys.argv[1:]):
     parser = ArgumentParser(prog="Nginx Proxy Manager CLI")
     subparsers = parser.add_subparsers(help="The supported commands.", dest="command")
 

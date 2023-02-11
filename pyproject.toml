@@ -7,8 +7,8 @@ name = "nginxCLI"
 description = "An NginxProxyManager CLI."
 readme = "README.md"
 requires-python = ">=3.7"
-version = "1.0"
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "version"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["generated-requirements.txt"]}
+version = {file = ["version.txt"]}
