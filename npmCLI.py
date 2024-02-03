@@ -127,7 +127,6 @@ def __get_template(nginx: NpmAPI, template_domain: str) -> dict:
 
 def __create_host(args):
     with NpmAPI(args.host, args.port, args.username, args.password) as server:
-        print(args.domains)
         template = __get_template(server, args.template)
         template['domain_names'] = args.domains
         template['forward_host'] = args.forwardHost
