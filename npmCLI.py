@@ -1,4 +1,4 @@
-from nginxAPI import NginxAPI
+from npmAPI import NpmAPI
 from argparse import ArgumentParser
 import sys
 
@@ -10,7 +10,7 @@ def main(args: list=sys.argv[1:]):
     parser.add_argument("--host", help="The NPM Server host.", nargs='?')
     parser.add_argument("--username", help="The NPM Server username.", nargs='?')
     parser.add_argument("--password", help="The NPM Server password.", nargs='?')
-    parser.add_argument("--port", help="The port to connect to.", nargs='?', type=int, default=NginxAPI.DEFAULT_PORT)
+    parser.add_argument("--port", help="The port to connect to.", nargs='?', type=int, default=NpmAPI.DEFAULT_PORT)
 
     items = parser.add_subparsers(help="The items to operate on.", dest="item")
 
@@ -107,7 +107,7 @@ def __validate_options(args):
     throwRequiredOptionException("--port")
 
 
-def __get_template(nginx: NginxAPI, template_domain: str) -> dict:
+def __get_template(nginx: NpmAPI, template_domain: str) -> dict:
     proxy_hosts = nginx.get_hosts()
 
     for proxy_host in proxy_hosts:
@@ -126,7 +126,7 @@ def __get_template(nginx: NginxAPI, template_domain: str) -> dict:
 
 
 def __create_host(args):
-    with NginxAPI(args.host, args.port, args.username, args.password) as server:
+    with NpmAPI(args.host, args.port, args.username, args.password) as server:
         template = __get_template(server, args.template)
         template['domain_names'] = args.domains
         template['forward_host'] = args.forwardHost

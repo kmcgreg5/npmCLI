@@ -4,7 +4,7 @@ class APIException(Exception):
     pass
 
 
-class NginxAPI:
+class NpmAPI:
     DEFAULT_PORT: int = 8181
     def __init__(self, host: str=None, port: int=DEFAULT_PORT, username: str=None, password: str=None):
         self._host = host
