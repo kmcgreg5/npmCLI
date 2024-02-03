@@ -1,32 +1,30 @@
-if __name__ == "__main__":
-    from nginxAPI import NginxAPI
-else:
-    from .nginxAPI import NginxAPI
-from typing import Optional
-from copy import deepcopy
-from base64 import b64encode, b64decode
-from requests import Response
+from nginxAPI import NginxAPI
 from argparse import ArgumentParser
 import sys
 
+class CLIException(Exception):
+    pass
+
 def main(args: list=sys.argv[1:]):
     parser = ArgumentParser(prog="Nginx Proxy Manager CLI")
-    subparsers = parser.add_subparsers(help="The supported commands.", dest="command")
+    parser.add_argument("--host", help="The NPM Server host.", nargs='?')
+    parser.add_argument("--username", help="The NPM Server username.", nargs='?')
+    parser.add_argument("--password", help="The NPM Server password.", nargs='?')
+    parser.add_argument("--port", help="The port to connect to.", nargs='?', type=int, default=NginxAPI.DEFAULT_PORT)
 
-    # Create info file parser
-    create_info_file_parser = subparsers.add_parser("create-info-file", help="Create an info file for subsequent usage.")
-    create_info_file_parser.add_argument("filepath", help="The info file path to create.")
-    create_info_file_parser.add_argument("host", help="The NginxProxyManager instance url.")
-    create_info_file_parser.add_argument("username", help="The username for the NginxProxyManager instance.")
-    create_info_file_parser.add_argument("password", help="The password for the NginxProxyManager instance.")
+    items = parser.add_subparsers(help="The items to operate on.", dest="item")
 
-    # Create host parser
-    create_host_parser = subparsers.add_parser("create-host", help="Creates a host from a template.")
-    create_host_parser.add_argument("filepath", help="The path to an info file.")
-    create_host_parser.add_argument("domains", help="A single domain or comma seperated list of domains to forward.")
-    create_host_parser.add_argument("host", help="The host to forward to.")
-    create_host_parser.add_argument("port", help="The port to forward to.")
+    # Host parser
+    host_parser = items.add_parser("host")
+    operations = host_parser.add_subparsers(help="The operation to perform.", dest='operation')
+    # Create Host parser
+    host_create_parser = operations.add_parser("create")
+    host_create_parser.add_argument('forwardHost', help="The host to forward to.")
+    host_create_parser.add_argument('forwardPort', help="The port to forward to.")
+    host_create_parser.add_argument('domains', help='The domains to forwards.', nargs='+')
+    host_create_parser.add_argument('--template', help='The template\'s domain name.', nargs='?', default='template')
 
+    '''
     # Delete host parser
     remove_host_parser = subparsers.add_parser("remove-host", help="Removes a host.")
     remove_host_parser.add_argument("filepath", help="The path to an info file.")
@@ -39,22 +37,23 @@ def main(args: list=sys.argv[1:]):
                             'block_exploits', 'caching_enabled', 'allow_websocket_upgrade', 'access_list_id', 'advanced_config', 'meta', 'locations', 'enabled']
     update_hosts_parser.add_argument("field", choices=field_choices[:-1], help="The field to update.")
     update_hosts_parser.add_argument("--searchfield", default=["advanced_config"], choices=field_choices, nargs='+', help="The field to match.")
-
+    '''
     args = parser.parse_args(args)
 
-    if args.command == "create-info-file":
-        create_info_file(args.filepath, args.host, args.username, args.password)
-    elif args.command == 'create-host':
-        domain_names = [domain.strip() for domain in args.domains.split(",")]
-        with NginxAPI(*read_info_file(args.filepath)) as nginx:
-            template = get_template(nginx, "template")
-            if template is None:
-                sys.exit(f'Failed to fetch template.')
+    if args.item == 'host':
+        if args.operation == 'create':
+            __validate_options(args)
+            __create_host(args)
+        else:
+            host_parser.print_help()
+            sys.exit(1)
+    else:
+        parser.print_help()
+        sys.exit(1)
+    
+    print("Success")
 
-            response = create_host(nginx, template, domain_names, args.host, int(args.port))
-
-        if not response.ok:
-            sys.exit(f'Failed:\nStatus {response.status_code}\n\n{response.text}\n\n')
+    '''
     elif args.command == "remove-host":
         with NginxAPI(*read_info_file(args.filepath)) as nginx:
             response = remove_host(nginx, args.domain)
@@ -89,28 +88,27 @@ def main(args: list=sys.argv[1:]):
     else:
         parser.print_help()
         sys.exit(1)
-    print("Success")
+    '''
 
 
-def create_info_file(file_path: str, host: str, username: str, password: str):
-    with open(file_path, "w") as file:
-        host = str(b64encode(host.encode("utf-8")))[2:-1]
-        username = str(b64encode(username.encode("utf-8")))[2:-1]
-        password= str(b64encode(password.encode("utf-8")))[2:-1]
-        file.write(f'{host}\n{username}\n{password}\n')
+def __validate_options(args):
+    def throwRequiredOptionException(option: str):
+        parsed_option = option
+        while parsed_option.startswith('-'):
+            parsed_option = parsed_option[1:]
 
-def read_info_file(file_path: str) -> tuple[str]:
-    with open(file_path, "r") as file:
-        host = b64decode(file.readline()).decode("utf-8")
-        username = b64decode(file.readline()).decode("utf-8")
-        password = b64decode(file.readline()).decode("utf-8")
-    
-    return host, username, password
+        value = getattr(args, parsed_option)
+        if value is None:
+            raise CLIException(f'The option \'{option}\' is undefined.')
+
+    throwRequiredOptionException("--host")
+    throwRequiredOptionException("--username")
+    throwRequiredOptionException("--password")
+    throwRequiredOptionException("--port")
 
 
-def get_template(nginx: NginxAPI, template_domain: str) -> Optional[dict]:
+def __get_template(nginx: NginxAPI, template_domain: str) -> dict:
     proxy_hosts = nginx.get_hosts()
-    if proxy_hosts is None: return None
 
     for proxy_host in proxy_hosts:
         if template_domain in proxy_host['domain_names']:
@@ -124,15 +122,29 @@ def get_template(nginx: NginxAPI, template_domain: str) -> Optional[dict]:
                     template[key] = value
             return template
 
-    return None
+    raise CLIException(f'Could not find a template for the domain \'{template_domain}\'.')
 
-def create_host(nginx: NginxAPI, template: dict, domain_names: list, forward_host: str, forward_port: int) -> tuple:
-    copy_template = deepcopy(template)
-    copy_template['domain_names'] = domain_names
-    copy_template['forward_host'] = forward_host
-    copy_template['forward_port'] = forward_port
-    return nginx.create_host(copy_template)
 
+def __create_host(args):
+    with NginxAPI(args.host, args.port, args.username, args.password) as server:
+        template = __get_template(server, args.template)
+        template['domain_names'] = args.domains
+        template['forward_host'] = args.forwardHost
+        template['forward_port'] = args.forwardPort
+
+        existing_domains = []
+        for host in server.get_hosts():
+            for domain in args.domains:
+                if domain in host['domain_names'] and domain not in existing_domains:
+                    existing_domains.append(domain)
+        
+        if len(existing_domains) != 0:
+            raise CLIException(f'The following domains already have an entry on this server: {existing_domains}')
+
+        server.create_host(template)
+
+
+'''
 def remove_host(nginx: NginxAPI, domain: str) -> Response:
     proxy_hosts = nginx.get_hosts()
     if proxy_hosts is None:
@@ -149,9 +161,11 @@ def remove_host(nginx: NginxAPI, domain: str) -> Response:
                 return nginx.update_host(proxy_host['id'], {'domain_names':proxy_host['domain_names']})
     
     sys.exit(f'Failed to find domain "{domain}".')
-
-
-
+'''
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f'Exception occurred: {str(e)}')
+        sys.exit(1)
