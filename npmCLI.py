@@ -23,7 +23,7 @@ def main(args: list=sys.argv[1:]):
     host_create_parser.add_argument('forwardPort', help="The port to forward to.")
     host_create_parser.add_argument('domains', help='The domains to forwards.', nargs='+')
     host_create_parser.add_argument('--template', help='The template\'s domain name.', nargs='?', default='template')
-    host_create_parser_add_argument('--forwardScheme', help='The scheme to forward with.', nargs='?', default='http')
+    host_create_parser.add_argument('--forwardScheme', help='The scheme to forward with.', nargs='?', default='http')
 
     '''
     # Delete host parser
