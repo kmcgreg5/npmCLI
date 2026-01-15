@@ -5,7 +5,7 @@ class APIException(Exception):
 
 
 class NpmAPI:
-    DEFAULT_PORT: int = 8181
+    DEFAULT_PORT: int = 81
     def __init__(self, host: str=None, port: int=DEFAULT_PORT, username: str=None, password: str=None):
         self._host = host
         self._port = port
